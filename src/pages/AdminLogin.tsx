@@ -77,10 +77,12 @@ export default function AdminLogin() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl gradient-primary mx-auto mb-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary mx-auto mb-4">
             <Euro className="h-6 w-6 text-primary-foreground" />
           </div>
-          <h1 className="font-display text-2xl font-bold">Admin Login</h1>
+          <h1 className="font-display text-2xl font-bold text-black">
+            Admin Login
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Malta Grants Eligibility Tool
           </p>
