@@ -1,0 +1,4 @@
+project_id = "fjerarngqpeglmjiwwqh"
+
+[functions.send-eligibility-report]
+verify_jwt = false
