@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import {
   Table,
   TableBody,
@@ -8,9 +8,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, Mail, CheckCircle2, Clock } from 'lucide-react';
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, Mail, CheckCircle2, Clock } from "lucide-react";
 
 interface SuggestedOption {
   option: string;
@@ -39,6 +39,9 @@ interface Lead {
   email_sent: boolean;
   created_at: string;
   suggested_options: SuggestedOption[] | null;
+  privacy_accepted?: boolean;
+  promotional_accepted?: boolean;
+  compliance_timestamp?: string;
 }
 
 export function ViewLeadsTab() {
@@ -49,17 +52,25 @@ export function ViewLeadsTab() {
   useEffect(() => {
     const fetchLeads = async () => {
       const { data, error } = await supabase
-        .from('leads')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .from("leads")
+        .select("*")
+        .order("created_at", { ascending: false });
 
       if (error) {
-        toast({ title: 'Error', description: 'Failed to load leads.', variant: 'destructive' });
+        toast({
+          title: "Error",
+          description: "Failed to load leads.",
+          variant: "destructive",
+        });
       } else {
-        setLeads((data || []).map((d: any) => ({
-          ...d,
-          suggested_options: Array.isArray(d.suggested_options) ? d.suggested_options : null,
-        })));
+        setLeads(
+          (data || []).map((d: any) => ({
+            ...d,
+            suggested_options: Array.isArray(d.suggested_options)
+              ? d.suggested_options
+              : null,
+          })),
+        );
       }
       setLoading(false);
     };
@@ -68,20 +79,20 @@ export function ViewLeadsTab() {
   }, []);
 
   const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('en-MT', {
-      style: 'currency',
-      currency: 'EUR',
+    return new Intl.NumberFormat("en-MT", {
+      style: "currency",
+      currency: "EUR",
       minimumFractionDigits: 0,
     }).format(val);
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-MT', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    return new Date(dateStr).toLocaleDateString("en-MT", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -98,15 +109,19 @@ export function ViewLeadsTab() {
       <div>
         <h2 className="font-display text-xl font-bold">Leads</h2>
         <p className="text-sm text-muted-foreground">
-          {leads.length} total lead{leads.length !== 1 ? 's' : ''}
+          {leads.length} total lead{leads.length !== 1 ? "s" : ""}
         </p>
       </div>
 
       {leads.length === 0 ? (
         <div className="form-section text-center py-12">
           <Mail className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="font-display font-semibold text-lg mb-2">No Leads Yet</h3>
-          <p className="text-muted-foreground">Leads will appear here when users submit the eligibility form.</p>
+          <h3 className="font-display font-semibold text-lg mb-2">
+            No Leads Yet
+          </h3>
+          <p className="text-muted-foreground">
+            Leads will appear here when users submit the eligibility form.
+          </p>
         </div>
       ) : (
         <div className="form-section overflow-x-auto">
@@ -121,44 +136,78 @@ export function ViewLeadsTab() {
                 <TableHead>Project Value</TableHead>
                 <TableHead>Suggested Funding Options</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Compliance</TableHead>
                 <TableHead>Date</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {leads.map((lead) => (
                 <TableRow key={lead.id}>
-                  <TableCell className="font-medium">{lead.full_name}</TableCell>
-                  <TableCell className="text-muted-foreground">{lead.email}</TableCell>
+                  <TableCell className="font-medium">
+                    {lead.full_name}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {lead.email}
+                  </TableCell>
                   <TableCell>
                     <div>
                       <span className="capitalize">{lead.business_size}</span>
                       {lead.business_name && (
-                        <p className="text-xs text-muted-foreground">{lead.business_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {lead.business_name}
+                        </p>
                       )}
                       {lead.registration_status && (
-                        <p className="text-xs text-muted-foreground capitalize">{lead.registration_status === 'in_process' ? 'In Progress' : lead.registration_status}</p>
+                        <p className="text-xs text-muted-foreground capitalize">
+                          {lead.registration_status === "in_process"
+                            ? "In Progress"
+                            : lead.registration_status}
+                        </p>
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="capitalize">{lead.project_location}</TableCell>
+                  <TableCell className="capitalize">
+                    {lead.project_location}
+                  </TableCell>
                   <TableCell>
                     <div>
-                      {lead.primary_activity && <span className="text-sm capitalize">{lead.primary_activity.replace(/_/g, ' ')}</span>}
-                      {lead.sub_activity && <p className="text-xs text-muted-foreground">{lead.sub_activity}</p>}
+                      {lead.primary_activity && (
+                        <span className="text-sm capitalize">
+                          {lead.primary_activity.replace(/_/g, " ")}
+                        </span>
+                      )}
+                      {lead.sub_activity && (
+                        <p className="text-xs text-muted-foreground">
+                          {lead.sub_activity}
+                        </p>
+                      )}
                     </div>
                   </TableCell>
-                  <TableCell>{formatCurrency(lead.total_project_value)}</TableCell>
                   <TableCell>
-                    {lead.suggested_options && lead.suggested_options.length > 0 ? (
+                    {formatCurrency(lead.total_project_value)}
+                  </TableCell>
+                  <TableCell>
+                    {lead.suggested_options &&
+                    lead.suggested_options.length > 0 ? (
                       <div className="space-y-1.5 min-w-[200px]">
                         {lead.suggested_options.map((opt, idx) => (
                           <div key={idx} className="text-xs">
-                            <span className="font-semibold text-primary">{opt.option}:</span>{' '}
-                            <span className="text-muted-foreground">{opt.grantName}</span>
+                            <span className="font-semibold text-primary">
+                              {opt.option}:
+                            </span>{" "}
+                            <span className="text-muted-foreground">
+                              {opt.grantName}
+                            </span>
                             <br />
-                            <span className="text-foreground">{(opt.aidIntensity * 100).toFixed(0)}% — {formatCurrency(opt.estimatedCoverage)}</span>
+                            <span className="text-foreground">
+                              {(opt.aidIntensity * 100).toFixed(0)}% —{" "}
+                              {formatCurrency(opt.estimatedCoverage)}
+                            </span>
                             {opt.eligibleCosts?.length > 0 && (
-                              <span className="text-muted-foreground"> · {opt.eligibleCosts.join(', ')}</span>
+                              <span className="text-muted-foreground">
+                                {" "}
+                                · {opt.eligibleCosts.join(", ")}
+                              </span>
                             )}
                           </div>
                         ))}
@@ -168,17 +217,38 @@ export function ViewLeadsTab() {
                     )}
                   </TableCell>
                   <TableCell>
-                    {lead.email_sent ? (
-                      <Badge variant="outline" className="badge-eligible gap-1">
-                        <CheckCircle2 className="h-3 w-3" />
-                        Sent
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="gap-1">
-                        <Clock className="h-3 w-3" />
-                        Pending
-                      </Badge>
-                    )}
+                    <div className="flex flex-col gap-1">
+                      {lead.email_sent ? (
+                        <Badge
+                          variant="outline"
+                          className="badge-eligible gap-1 w-fit"
+                        >
+                          <CheckCircle2 className="h-3 w-3" />
+                          Sent
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="gap-1 w-fit">
+                          <Clock className="h-3 w-3" />
+                          Pending
+                        </Badge>
+                      )}
+                      {lead.privacy_accepted && (
+                        <Badge
+                          variant="secondary"
+                          className="text-[10px] py-0 h-4 w-fit"
+                        >
+                          Privacy ✓
+                        </Badge>
+                      )}
+                      {lead.promotional_accepted && (
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] py-0 h-4 w-fit"
+                        >
+                          Promo ✓
+                        </Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
                     {formatDate(lead.created_at)}

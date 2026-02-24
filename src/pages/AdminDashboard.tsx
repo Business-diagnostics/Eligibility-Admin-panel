@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { ManageGrantsTab } from "@/components/admin/ManageGrantsTab";
 import { ViewLeadsTab } from "@/components/admin/ViewLeadsTab";
+import { CoreExpenseMappingTab } from "@/components/admin/CoreExpenseMappingTab";
 import { DashboardAnalytics } from "@/components/admin/DashboardAnalytics";
 import type { Session } from "@supabase/supabase-js";
 
@@ -88,7 +89,7 @@ export default function AdminDashboard() {
       {/* Content */}
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="analytics" className="space-y-6">
-          <TabsList className="grid w-full max-w-lg grid-cols-3">
+          <TabsList className="grid w-full max-w-2xl grid-cols-4">
             <TabsTrigger value="analytics" className="gap-2">
               <BarChart3 className="h-4 w-4" />
               Analytics
@@ -100,6 +101,10 @@ export default function AdminDashboard() {
             <TabsTrigger value="leads" className="gap-2">
               <Users className="h-4 w-4" />
               View Leads
+            </TabsTrigger>
+            <TabsTrigger value="expense-rules" className="gap-2">
+              <Settings className="h-4 w-4" />
+              Expense Rules
             </TabsTrigger>
           </TabsList>
 
@@ -113,6 +118,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="leads">
             <ViewLeadsTab />
+          </TabsContent>
+
+          <TabsContent value="expense-rules">
+            <CoreExpenseMappingTab />
           </TabsContent>
         </Tabs>
       </main>
