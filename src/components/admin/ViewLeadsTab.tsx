@@ -39,6 +39,7 @@ interface Lead {
   email_sent: boolean;
   created_at: string;
   suggested_options: SuggestedOption[] | null;
+  eligible_grants?: any[] | null;
   privacy_accepted?: boolean;
   promotional_accepted?: boolean;
   compliance_timestamp?: string;
@@ -134,10 +135,10 @@ export function ViewLeadsTab() {
                 <TableHead>Location</TableHead>
                 <TableHead>Activity</TableHead>
                 <TableHead>Project Value</TableHead>
-                <TableHead>Suggested Funding Options</TableHead>
-                <TableHead>Email</TableHead>
+                <TableHead>Suggested Options</TableHead>
+                <TableHead>Email Status</TableHead>
                 <TableHead>Compliance</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead>Submitted At</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -146,7 +147,10 @@ export function ViewLeadsTab() {
                   <TableCell className="font-medium">
                     {lead.full_name}
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell
+                    className="text-muted-foreground max-w-[180px] truncate"
+                    title={lead.email}
+                  >
                     {lead.email}
                   </TableCell>
                   <TableCell>
@@ -190,52 +194,70 @@ export function ViewLeadsTab() {
                     {lead.suggested_options &&
                     lead.suggested_options.length > 0 ? (
                       <div className="space-y-1.5 min-w-[200px]">
-                        {lead.suggested_options.map((opt, idx) => (
-                          <div key={idx} className="text-xs">
-                            <span className="font-semibold text-primary">
-                              {opt.option}:
-                            </span>{" "}
-                            <span className="text-muted-foreground">
-                              {opt.grantName}
-                            </span>
-                            <br />
-                            <span className="text-foreground">
-                              {(opt.aidIntensity * 100).toFixed(0)}% —{" "}
-                              {formatCurrency(opt.estimatedCoverage)}
-                            </span>
-                            {opt.eligibleCosts?.length > 0 && (
-                              <span className="text-muted-foreground">
-                                {" "}
-                                · {opt.eligibleCosts.join(", ")}
+                        {lead.suggested_options.map((opt, idx) => {
+                          // Try to get real name from suggested_options or fallback to mapping from eligible_grants
+                          let displayName = opt.grantName;
+                          if (
+                            lead.eligible_grants &&
+                            Array.isArray(lead.eligible_grants)
+                          ) {
+                            const found = lead.eligible_grants.find(
+                              (g: any) =>
+                                g.id === (opt as any).id ||
+                                g.name === opt.grantName,
+                            );
+                            if (found && found.full_name)
+                              displayName = found.full_name;
+                          }
+
+                          return (
+                            <div key={idx} className="text-xs">
+                              <span className="font-semibold text-primary">
+                                {opt.option}:
+                              </span>{" "}
+                              <span className="text-foreground font-medium">
+                                {displayName}
                               </span>
-                            )}
-                          </div>
-                        ))}
+                              <br />
+                              <span className="text-muted-foreground">
+                                {(opt.aidIntensity * 100).toFixed(0)}% —{" "}
+                                {formatCurrency(opt.estimatedCoverage)}
+                              </span>
+                            </div>
+                          );
+                        })}
                       </div>
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )}
                   </TableCell>
                   <TableCell>
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-1 w-[100px]">
                       {lead.email_sent ? (
                         <Badge
                           variant="outline"
-                          className="badge-eligible gap-1 w-fit"
+                          className="badge-eligible gap-1 w-fit bg-success/10 text-success border-success/30 px-2 py-0.5"
                         >
                           <CheckCircle2 className="h-3 w-3" />
                           Sent
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="gap-1 w-fit">
+                        <Badge
+                          variant="outline"
+                          className="gap-1 w-fit px-2 py-0.5"
+                        >
                           <Clock className="h-3 w-3" />
                           Pending
                         </Badge>
                       )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-1 w-[100px]">
                       {lead.privacy_accepted && (
                         <Badge
                           variant="secondary"
-                          className="text-[10px] py-0 h-4 w-fit"
+                          className="text-[10px] py-1 h-auto w-fit px-2 bg-primary/10 text-primary border-primary/20"
                         >
                           Privacy ✓
                         </Badge>
@@ -243,7 +265,7 @@ export function ViewLeadsTab() {
                       {lead.promotional_accepted && (
                         <Badge
                           variant="outline"
-                          className="text-[10px] py-0 h-4 w-fit"
+                          className="text-[10px] py-1 h-auto w-fit px-2"
                         >
                           Promo ✓
                         </Badge>

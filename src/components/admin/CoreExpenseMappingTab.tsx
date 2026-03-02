@@ -13,13 +13,23 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Loader2, Plus, Trash2 } from "lucide-react";
-import { PRIMARY_ACTIVITIES, type PrimaryActivity } from "@/types/eligibility";
+  Loader2,
+  Plus,
+  Trash2,
+  AlertTriangle,
+  Layers,
+  Briefcase,
+} from "lucide-react";
+import {
+  PRIMARY_ACTIVITIES,
+  SUB_ACTIVITIES,
+  type PrimaryActivity,
+} from "@/types/eligibility";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogTitle } from "@radix-ui/react-dialog";
+import { DialogHeader } from "../ui/dialog";
 
 // This matches the COST_CATEGORIES in ManageGrantsTab.tsx but for selection
 const COST_CATEGORIES = [
@@ -86,7 +96,8 @@ const COST_CATEGORIES = [
 interface CoreExpenseRule {
   id: string;
   primary_activity: string;
-  required_cost_category: string;
+  sub_activity: string | null;
+  required_cost_category: string; // Stores comma-separated values
   min_value: number;
 }
 
@@ -99,9 +110,12 @@ export function CoreExpenseMappingTab() {
 
   const [newRule, setNewRule] = useState<Partial<CoreExpenseRule>>({
     primary_activity: "",
+    sub_activity: "",
     required_cost_category: "",
     min_value: 1,
   });
+
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const fetchRules = async () => {
     setLoading(true);
@@ -127,19 +141,31 @@ export function CoreExpenseMappingTab() {
   }, []);
 
   const handleSave = async () => {
-    if (!newRule.primary_activity || !newRule.required_cost_category) {
+    const costCategoryString = selectedCategories.join(",");
+
+    if (
+      !newRule.primary_activity ||
+      !newRule.sub_activity ||
+      selectedCategories.length === 0
+    ) {
       toast({
         title: "Validation Error",
-        description: "Please select both activity and cost category.",
+        description:
+          "Please select activity, sub-activity and at least one cost category.",
         variant: "destructive",
       });
       return;
     }
 
     setSaving(true);
+    const ruleToSave = {
+      ...newRule,
+      required_cost_category: costCategoryString,
+    };
+
     const { error } = await supabase
       .from("activity_core_expense_rules")
-      .insert([newRule]);
+      .insert([ruleToSave]);
 
     if (error) {
       toast({
@@ -152,9 +178,11 @@ export function CoreExpenseMappingTab() {
       setIsDialogOpen(false);
       setNewRule({
         primary_activity: "",
+        sub_activity: "",
         required_cost_category: "",
         min_value: 1,
       });
+      setSelectedCategories([]);
       fetchRules();
     }
     setSaving(false);
@@ -183,6 +211,22 @@ export function CoreExpenseMappingTab() {
   };
 
   const getLabelForCost = (cost: string) => {
+    if (!cost) return "-";
+    const keys = cost.split(",");
+    if (keys.length > 1) {
+      return (
+        <div className="flex flex-wrap gap-1">
+          {keys.map((k, i) => (
+            <Badge key={k} variant="secondary" className="text-[10px]">
+              {COST_CATEGORIES.find((c) => c.key === k)?.label || k}
+              {i < keys.length - 1 && (
+                <span className="ml-1 text-muted-foreground">OR</span>
+              )}
+            </Badge>
+          ))}
+        </div>
+      );
+    }
     return COST_CATEGORIES.find((c) => c.key === cost)?.label || cost;
   };
 
@@ -216,8 +260,9 @@ export function CoreExpenseMappingTab() {
           <TableHeader>
             <TableRow>
               <TableHead>Primary Activity</TableHead>
-              <TableHead>Required Cost Category</TableHead>
-              <TableHead>Minimum Threshold</TableHead>
+              <TableHead>Sub Activity</TableHead>
+              <TableHead>Required Categories (OR)</TableHead>
+              <TableHead>Min Threshold</TableHead>
               <TableHead className="w-[100px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -234,13 +279,18 @@ export function CoreExpenseMappingTab() {
             ) : (
               rules.map((rule) => (
                 <TableRow key={rule.id}>
-                  <TableCell className="font-medium">
+                  <TableCell className="font-medium text-sm">
                     {getLabelForActivity(rule.primary_activity)}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {rule.sub_activity || "-"}
                   </TableCell>
                   <TableCell>
                     {getLabelForCost(rule.required_cost_category)}
                   </TableCell>
-                  <TableCell>€{rule.min_value}</TableCell>
+                  <TableCell className="text-sm font-mono">
+                    €{rule.min_value.toLocaleString()}
+                  </TableCell>
                   <TableCell>
                     <Button
                       variant="ghost"
@@ -264,43 +314,102 @@ export function CoreExpenseMappingTab() {
             <DialogTitle>Create New Rule</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Primary Activity</Label>
-              <select
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                value={newRule.primary_activity}
-                onChange={(e) =>
-                  setNewRule({ ...newRule, primary_activity: e.target.value })
-                }
-              >
-                <option value="">Select Activity...</option>
-                {Object.entries(PRIMARY_ACTIVITIES).map(([key, label]) => (
-                  <option key={key} value={key}>
-                    {label}
-                  </option>
-                ))}
-              </select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Briefcase className="h-4 w-4 text-primary" />
+                  Primary Activity
+                </Label>
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={newRule.primary_activity}
+                  onChange={(e) => {
+                    const activity = e.target.value;
+                    setNewRule({
+                      ...newRule,
+                      primary_activity: activity,
+                      sub_activity: "",
+                    });
+                  }}
+                >
+                  <option value="">Select Activity...</option>
+                  {Object.entries(PRIMARY_ACTIVITIES).map(([key, label]) => (
+                    <option key={key} value={key}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Layers className="h-4 w-4 text-accent" />
+                  Sub Project Activity
+                </Label>
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={newRule.sub_activity || ""}
+                  disabled={!newRule.primary_activity}
+                  onChange={(e) =>
+                    setNewRule({ ...newRule, sub_activity: e.target.value })
+                  }
+                >
+                  <option value="">Select Sub-Activity...</option>
+                  {newRule.primary_activity &&
+                    SUB_ACTIVITIES[
+                      newRule.primary_activity as PrimaryActivity
+                    ]?.map((sub) => (
+                      <option key={sub} value={sub}>
+                        {sub}
+                      </option>
+                    ))}
+                </select>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Required Cost Category</Label>
-              <select
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                value={newRule.required_cost_category}
-                onChange={(e) =>
-                  setNewRule({
-                    ...newRule,
-                    required_cost_category: e.target.value,
-                  })
-                }
-              >
-                <option value="">Select Cost Category...</option>
-                {COST_CATEGORIES.map((cat) => (
-                  <option key={cat.key} value={cat.key}>
-                    {cat.group}: {cat.label}
-                  </option>
-                ))}
-              </select>
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold flex items-center justify-between">
+                Required Cost Categories (Choose 1 or more for OR condition)
+                <Badge variant="outline" className="font-normal text-[10px]">
+                  {selectedCategories.length} selected
+                </Badge>
+              </Label>
+              <ScrollArea className="h-[200px] rounded-md border p-4 bg-muted/20">
+                <div className="grid grid-cols-1 gap-3">
+                  {COST_CATEGORIES.map((cat) => (
+                    <div
+                      key={cat.key}
+                      className="flex items-center space-x-3 group"
+                    >
+                      <Checkbox
+                        id={`cat-${cat.key}`}
+                        checked={selectedCategories.includes(cat.key)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedCategories([
+                              ...selectedCategories,
+                              cat.key,
+                            ]);
+                          } else {
+                            setSelectedCategories(
+                              selectedCategories.filter((id) => id !== cat.key),
+                            );
+                          }
+                        }}
+                      />
+                      <Label
+                        htmlFor={`cat-${cat.key}`}
+                        className="text-sm font-normal cursor-pointer group-hover:text-primary transition-colors"
+                      >
+                        <span className="text-muted-foreground mr-1">
+                          [{cat.group}]
+                        </span>
+                        {cat.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
             </div>
 
             <div className="space-y-2">
