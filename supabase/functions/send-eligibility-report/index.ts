@@ -363,10 +363,10 @@ function generateEmailHTML(data: ReportRequest): string {
       <!-- Disclaimer -->
       <div style="margin-top: 32px; padding: 20px; border-top: 1px solid #e5e7eb; background: #f9fafb; border-radius: 0 0 8px 8px;">
         <p style="color: #6b7280; font-size: 12px; margin: 0 0 12px; line-height: 1.7;">
-          Results shown are indicative only and do not guarantee eligibility or funding approval. Full eligibility depends on additional criteria assessed by the relevant managing authority. Business Diagnostic Ltd accepts no liability for decisions taken based on these results.
+          Results shown are indicative only and do not guarantee eligibility or funding approval. Full eligibility depends on additional criteria assessed by the relevant managing authority. Business Diagnostics Ltd accepts no liability for decisions taken based on these results.
         </p>
         <p style="color: #9ca3af; font-size: 11px; margin: 0; line-height: 1.6;">
-          Generated on ${new Date().toLocaleDateString("en-MT")} by Business Diagnostics. Business Diagnostic Ltd is not affiliated with Malta Enterprise, Business Enhance, or any managing authority.
+          Generated on ${new Date().toLocaleDateString("en-MT")} by Business Diagnostics. Business Diagnostics Ltd is not affiliated with Malta Enterprise, Business Enhance, or any managing authority.
         </p>
         <p style="margin: 10px 0 0;"><a href="https://grant-buddy-malta.lovable.app" style="color: #365F91; font-size: 12px; text-decoration: underline;">View Full Disclaimer</a></p>
       </div>
