@@ -417,7 +417,7 @@ export function ManageGrantsTab() {
 
               {/* Aid Intensities */}
               <AccordionItem value="aid">
-                <AccordionTrigger className="font-display font-semibold">Aid Intensities</AccordionTrigger>
+                <AccordionTrigger className="font-display font-semibold">Aid Intensity</AccordionTrigger>
                 <AccordionContent className="pt-2">
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {([
@@ -573,7 +573,7 @@ export function ManageGrantsTab() {
               {/* Eligible Activities */}
               <AccordionItem value="activities">
                 <AccordionTrigger className="font-display font-semibold">
-                  Eligible Activities
+                  Eligible Project Activities
                   {editGrant.eligible_activities?.length ? (
                     <Badge variant="secondary" className="ml-2">{editGrant.eligible_activities.length} selected</Badge>
                   ) : (
@@ -604,7 +604,7 @@ export function ManageGrantsTab() {
               {/* Supported Sub-Activities */}
               <AccordionItem value="sub_activities">
                 <AccordionTrigger className="font-display font-semibold">
-                  Supported Sub-Activities
+                  Sub Project Activities
                   {editGrant.supported_sub_activities && editGrant.supported_sub_activities.length > 0 ? (
                     <Badge variant="secondary" className="ml-2">{editGrant.supported_sub_activities.length} selected</Badge>
                   ) : (
