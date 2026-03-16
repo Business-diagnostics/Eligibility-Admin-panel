@@ -16,6 +16,7 @@ import {
   Loader2,
   Plus,
   Trash2,
+  Edit2,
   AlertTriangle,
   Layers,
   Briefcase,
@@ -28,8 +29,12 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogTitle } from "@radix-ui/react-dialog";
-import { DialogHeader } from "../ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // This matches the COST_CATEGORIES in ManageGrantsTab.tsx but for selection
 const COST_CATEGORIES = [
@@ -108,7 +113,7 @@ export function CoreExpenseMappingTab() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const [newRule, setNewRule] = useState<Partial<CoreExpenseRule>>({
+  const [currentRule, setCurrentRule] = useState<Partial<CoreExpenseRule>>({
     primary_activity: "",
     sub_activity: "",
     required_cost_category: "",
@@ -140,12 +145,29 @@ export function CoreExpenseMappingTab() {
     fetchRules();
   }, []);
 
+  const handleEdit = (rule: CoreExpenseRule) => {
+    setCurrentRule(rule);
+    setSelectedCategories(rule.required_cost_category.split(","));
+    setIsDialogOpen(true);
+  };
+
+  const handleCreateNew = () => {
+    setCurrentRule({
+      primary_activity: "",
+      sub_activity: "",
+      required_cost_category: "",
+      min_value: 1,
+    });
+    setSelectedCategories([]);
+    setIsDialogOpen(true);
+  };
+
   const handleSave = async () => {
     const costCategoryString = selectedCategories.join(",");
 
     if (
-      !newRule.primary_activity ||
-      !newRule.sub_activity ||
+      !currentRule.primary_activity ||
+      !currentRule.sub_activity ||
       selectedCategories.length === 0
     ) {
       toast({
@@ -159,31 +181,45 @@ export function CoreExpenseMappingTab() {
 
     setSaving(true);
     const ruleToSave = {
-      ...newRule,
+      ...currentRule,
       required_cost_category: costCategoryString,
     };
 
-    const { error } = await supabase
-      .from("activity_core_expense_rules")
-      .insert([ruleToSave]);
+    if (currentRule.id) {
+      // Update existing
+      const { error } = await supabase
+        .from("activity_core_expense_rules")
+        .update(ruleToSave)
+        .eq("id", currentRule.id);
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "Success", description: "Rule updated successfully." });
+        setIsDialogOpen(false);
+        fetchRules();
+      }
     } else {
-      toast({ title: "Success", description: "Rule created successfully." });
-      setIsDialogOpen(false);
-      setNewRule({
-        primary_activity: "",
-        sub_activity: "",
-        required_cost_category: "",
-        min_value: 1,
-      });
-      setSelectedCategories([]);
-      fetchRules();
+      // Create new
+      const { error } = await supabase
+        .from("activity_core_expense_rules")
+        .insert([ruleToSave]);
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "Success", description: "Rule created successfully." });
+        setIsDialogOpen(false);
+        fetchRules();
+      }
     }
     setSaving(false);
   };
@@ -249,7 +285,7 @@ export function CoreExpenseMappingTab() {
             Define mandatory cost categories for specific business activities.
           </p>
         </div>
-        <Button onClick={() => setIsDialogOpen(true)} className="gap-2">
+        <Button onClick={handleCreateNew} className="gap-2">
           <Plus className="h-4 w-4" />
           Create Rule
         </Button>
@@ -270,7 +306,7 @@ export function CoreExpenseMappingTab() {
             {rules.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={4}
+                  colSpan={5}
                   className="text-center py-8 text-muted-foreground"
                 >
                   No rules defined yet.
@@ -291,7 +327,14 @@ export function CoreExpenseMappingTab() {
                   <TableCell className="text-sm font-mono">
                     €{rule.min_value.toLocaleString()}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="flex space-x-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEdit(rule)}
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -311,7 +354,7 @@ export function CoreExpenseMappingTab() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create New Rule</DialogTitle>
+            <DialogTitle>{currentRule.id ? "Edit Rule" : "Create New Rule"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
@@ -322,11 +365,11 @@ export function CoreExpenseMappingTab() {
                 </Label>
                 <select
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  value={newRule.primary_activity}
+                  value={currentRule.primary_activity}
                   onChange={(e) => {
                     const activity = e.target.value;
-                    setNewRule({
-                      ...newRule,
+                    setCurrentRule({
+                      ...currentRule,
                       primary_activity: activity,
                       sub_activity: "",
                     });
@@ -348,16 +391,16 @@ export function CoreExpenseMappingTab() {
                 </Label>
                 <select
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  value={newRule.sub_activity || ""}
-                  disabled={!newRule.primary_activity}
+                  value={currentRule.sub_activity || ""}
+                  disabled={!currentRule.primary_activity}
                   onChange={(e) =>
-                    setNewRule({ ...newRule, sub_activity: e.target.value })
+                    setCurrentRule({ ...currentRule, sub_activity: e.target.value })
                   }
                 >
                   <option value="">Select Sub-Activity...</option>
-                  {newRule.primary_activity &&
+                  {currentRule.primary_activity &&
                     SUB_ACTIVITIES[
-                      newRule.primary_activity as PrimaryActivity
+                      currentRule.primary_activity as PrimaryActivity
                     ]?.map((sub) => (
                       <option key={sub} value={sub}>
                         {sub}
@@ -416,10 +459,10 @@ export function CoreExpenseMappingTab() {
               <Label>Minimum Threshold (€)</Label>
               <Input
                 type="number"
-                value={newRule.min_value}
+                value={currentRule.min_value}
                 onChange={(e) =>
-                  setNewRule({
-                    ...newRule,
+                  setCurrentRule({
+                    ...currentRule,
                     min_value: parseFloat(e.target.value) || 0,
                   })
                 }
@@ -434,7 +477,7 @@ export function CoreExpenseMappingTab() {
               {saving ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : null}
-              Save Rule
+              {currentRule.id ? "Update Rule" : "Save Rule"}
             </Button>
           </div>
         </DialogContent>
