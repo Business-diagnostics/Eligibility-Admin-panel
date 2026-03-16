@@ -17,7 +17,7 @@ import {
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Loader2, Pencil, Plus, Power } from 'lucide-react';
+import { Loader2, Pencil, Plus, Power, Trash2 } from 'lucide-react';
 import { NACE_CODES, PRIMARY_ACTIVITIES, SUB_ACTIVITIES, type NaceCode, type PrimaryActivity } from '@/types/eligibility';
 import type { EligibleCostsMap } from '@/lib/triageEngine';
 
@@ -199,6 +199,24 @@ export function ManageGrantsTab() {
     }
   };
 
+  const handleDelete = async (grant: GrantScheme) => {
+    if (!window.confirm(`Are you sure you want to delete ${grant.scheme_name}? This cannot be undone.`)) {
+      return;
+    }
+
+    const { error } = await supabase
+      .from('grant_schemes')
+      .delete()
+      .eq('id', grant.id);
+
+    if (error) {
+      toast({ title: 'Error', description: 'Failed to delete grant.', variant: 'destructive' });
+    } else {
+      toast({ title: 'Deleted', description: `${grant.scheme_name} removed.` });
+      fetchGrants();
+    }
+  };
+
   const updateField = <K extends keyof GrantScheme>(key: K, value: GrantScheme[K]) => {
     if (!editGrant) return;
     setEditGrant({ ...editGrant, [key]: value });
@@ -324,9 +342,12 @@ export function ManageGrantsTab() {
                     {grant.is_active ? 'Active' : 'Inactive'}
                   </Button>
                 </TableCell>
-                <TableCell>
+                <TableCell className="flex space-x-1">
                   <Button variant="ghost" size="icon" onClick={() => handleEdit(grant)}>
                     <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => handleDelete(grant)} className="text-destructive">
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </TableCell>
               </TableRow>
