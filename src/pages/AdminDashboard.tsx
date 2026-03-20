@@ -62,8 +62,8 @@ export default function AdminDashboard() {
       <header className="border-b border-border bg-card sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-              <Euro className="h-5 w-5 text-primary-foreground" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg">
+              <img src="/favicon.svg" alt="Admin Logo" className="h-10 w-10 object-contain" />
             </div>
             <div>
               <h1 className="font-display font-bold text-lg text-black">

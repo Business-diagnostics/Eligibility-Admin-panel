@@ -10,7 +10,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Mail, CheckCircle2, Clock, Eye, ShieldCheck, Briefcase, MapPin, Layers, Coins } from "lucide-react";
+import { Loader2, Mail, CheckCircle2, Clock, Eye, ShieldCheck, Briefcase, MapPin, Layers, Coins, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -135,6 +146,30 @@ export function ViewLeadsTab() {
 
     fetchLeads();
   }, []);
+  
+  const handleDeleteLead = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("leads")
+        .delete()
+        .eq("id", id);
+        
+      if (error) throw error;
+      
+      setLeads(prev => prev.filter(l => l.id !== id));
+      toast({
+        title: "Lead Deleted",
+        description: "The lead has been permanently removed.",
+      });
+    } catch (err) {
+      console.error("Delete error:", err);
+      toast({
+        title: "Delete Failed",
+        description: "An error occurred while deleting the lead.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleViewDetails = (lead: Lead) => {
     setSelectedLead(lead);
@@ -194,6 +229,7 @@ export function ViewLeadsTab() {
                 <TableHead>Submitted At</TableHead>
                 <TableHead>Full Name</TableHead>
                 <TableHead>Business Name</TableHead>
+                <TableHead>Business Age</TableHead>
                 <TableHead>Project Value</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Action</TableHead>
@@ -215,6 +251,9 @@ export function ViewLeadsTab() {
                   <TableCell>
                     {lead.business_name || lead.email}
                   </TableCell>
+                  <TableCell className="capitalize">
+                    {lead.business_age}
+                  </TableCell>
                   <TableCell className="font-bold text-slate-900">
                     {formatCurrency(lead.total_project_value)}
                   </TableCell>
@@ -235,9 +274,49 @@ export function ViewLeadsTab() {
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <div className="flex justify-end gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 w-8 p-0"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleViewDetails(lead);
+                      }}
+                    >
                       <Eye className="h-4 w-4 text-muted-foreground" />
                     </Button>
+                    
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Lead?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently remove the lead for {lead.full_name} from the database. This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => handleDeleteLead(lead.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
