@@ -21,7 +21,7 @@ import { Loader2, Pencil, Plus, Power, Trash2 } from 'lucide-react';
 import { NACE_CODES, PRIMARY_ACTIVITIES, SUB_ACTIVITIES, type NaceCode, type PrimaryActivity } from '@/types/eligibility';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check, ChevronsUpDown, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { EligibleCostsMap } from '@/lib/triageEngine';
 
@@ -573,10 +573,11 @@ export function ManageGrantsTab() {
                   <div className="space-y-4 rounded-lg bg-muted/5">
                     <div className="space-y-2">
                       <Label className="text-sm font-semibold">Search & Select Industries</Label>
-                      <div className="flex items-center bg-transparent">
+                      <div className="flex items-center bg-transparent border-b border-border px-3">
+                        <Search className="mr-3 h-4 w-4 shrink-0 opacity-50" />
                         <input 
                           placeholder="Search industries..." 
-                          className="h-11 w-full bg-transparent outline-none border-none ring-0 focus:ring-0 focus:outline-none px-1 text-sm"
+                          className="h-11 w-full bg-transparent outline-none border-none ring-0 focus:ring-0 focus:outline-none text-sm py-3"
                           value={naceSearch}
                           onChange={(e) => setNaceSearch(e.target.value)}
                         />
