@@ -200,6 +200,7 @@ export interface ProjectCosts {
 // Business Basics - Updated with turnover and de minimis tracking
 export interface BusinessBasics {
   name: string;
+  email: string; // Added email field
   registrationStatus: RegistrationStatus;
   legalStructure: LegalStructure;
   size: BusinessSize;
@@ -283,6 +284,7 @@ export const defaultProjectCosts: ProjectCosts = {
 export const defaultProjectData: ProjectData = {
   businessBasics: {
     name: '',
+    email: '',
     registrationStatus: 'yes',
     legalStructure: 'limited_company',
     size: 'micro',

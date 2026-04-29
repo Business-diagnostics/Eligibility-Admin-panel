@@ -249,4 +249,13 @@
   .badge-ineligible {
     @apply bg-destructive/10 text-destructive border border-destructive/20;
   }
+
+  /* Hide scrollbar utility */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }

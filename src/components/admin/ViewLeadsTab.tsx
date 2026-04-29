@@ -85,7 +85,8 @@ interface SuggestedOption {
 interface Lead {
   id: string;
   full_name: string;
-  email: string;
+  email: string; // Report delivery email
+  business_email?: string | null; // Primary email from step 1
   business_name: string | null;
   business_size: string;
   business_age: string;
@@ -228,6 +229,7 @@ export function ViewLeadsTab() {
               <TableRow>
                 <TableHead>Submitted At</TableHead>
                 <TableHead>Full Name</TableHead>
+                <TableHead>Email</TableHead>
                 <TableHead>Business Name</TableHead>
                 <TableHead>Business Age</TableHead>
                 <TableHead>Project Value</TableHead>
@@ -248,8 +250,11 @@ export function ViewLeadsTab() {
                   <TableCell className="font-semibold text-primary">
                     {lead.full_name}
                   </TableCell>
+                  <TableCell className="text-sm">
+                    {lead.email}
+                  </TableCell>
                   <TableCell>
-                    {lead.business_name || lead.email}
+                    {lead.business_name || "-"}
                   </TableCell>
                   <TableCell className="capitalize">
                     {lead.business_age}
@@ -347,7 +352,11 @@ export function ViewLeadsTab() {
                     </h3>
                     <div className="bg-muted/30 p-4 rounded-lg space-y-3">
                       <div>
-                        <p className="text-xs text-muted-foreground">Contact Email</p>
+                        <p className="text-xs text-muted-foreground">Business Email (Primary)</p>
+                        <p className="font-medium truncate">{selectedLead.business_email || "Not captured"}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Report Delivery Email</p>
                         <p className="font-medium truncate">{selectedLead.email}</p>
                       </div>
                       <div className="grid grid-cols-2 gap-4">

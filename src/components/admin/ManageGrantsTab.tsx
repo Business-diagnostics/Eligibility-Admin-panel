@@ -19,6 +19,10 @@ import {
 } from '@/components/ui/accordion';
 import { Loader2, Pencil, Plus, Power, Trash2 } from 'lucide-react';
 import { NACE_CODES, PRIMARY_ACTIVITIES, SUB_ACTIVITIES, type NaceCode, type PrimaryActivity } from '@/types/eligibility';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Check, ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import type { EligibleCostsMap } from '@/lib/triageEngine';
 
 const LEGAL_STRUCTURES = [
@@ -123,6 +127,9 @@ export function ManageGrantsTab() {
   const [editGrant, setEditGrant] = useState<GrantScheme | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [dbPrimaryActivities, setDbPrimaryActivities] = useState<{ id: string, name: string }[]>([]);
+  const [naceSearch, setNaceSearch] = useState("");
+  const [activitySearch, setActivitySearch] = useState("");
 
   const fetchGrants = async () => {
     const { data, error } = await supabase
@@ -138,7 +145,21 @@ export function ManageGrantsTab() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchGrants(); }, []);
+  const fetchPrimaryActivities = async () => {
+    const { data, error } = await supabase
+      .from('primary_industries')
+      .select('id, name')
+      .order('name');
+    
+    if (!error && data) {
+      setDbPrimaryActivities(data);
+    }
+  };
+
+  useEffect(() => { 
+    fetchGrants(); 
+    fetchPrimaryActivities();
+  }, []);
 
   const handleToggleActive = async (grant: GrantScheme) => {
     const { error } = await supabase
@@ -549,23 +570,65 @@ export function ManageGrantsTab() {
                   )}
                 </AccordionTrigger>
                 <AccordionContent className="pt-2 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={selectAllNace}>
-                      {editGrant.eligible_nace_codes?.length === Object.keys(NACE_CODES).length ? 'Deselect All' : 'Select All'}
-                    </Button>
-                    <span className="text-xs text-muted-foreground">Leave empty = all industries eligible</span>
-                  </div>
-                  <div className="grid gap-2 md:grid-cols-2 max-h-60 overflow-y-auto border rounded-lg p-3">
-                    {(Object.entries(NACE_CODES) as [NaceCode, string][]).map(([code, description]) => (
-                      <label key={code} className="flex items-start gap-2 text-sm cursor-pointer hover:bg-muted/50 p-1 rounded">
-                        <Checkbox
-                          checked={editGrant.eligible_nace_codes?.includes(code) ?? false}
-                          onCheckedChange={() => toggleNaceCode(code)}
-                          className="mt-0.5"
+                  <div className="space-y-4 rounded-lg bg-muted/5">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Search & Select Industries</Label>
+                      <div className="flex items-center bg-transparent">
+                        <input 
+                          placeholder="Search industries..." 
+                          className="h-11 w-full bg-transparent outline-none border-none ring-0 focus:ring-0 focus:outline-none px-1 text-sm"
+                          value={naceSearch}
+                          onChange={(e) => setNaceSearch(e.target.value)}
                         />
-                        <span><strong>{code}</strong> – {description}</span>
-                      </label>
-                    ))}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 px-1">
+                      <Button variant="outline" size="sm" onClick={selectAllNace}>
+                        {editGrant.eligible_nace_codes?.length === Object.keys(NACE_CODES).length ? 'Deselect All' : 'Select All'}
+                      </Button>
+                      <span className="text-xs text-muted-foreground">
+                        {editGrant.eligible_nace_codes?.length || 0} industries selected
+                      </span>
+                    </div>
+
+                    <div className="max-h-[350px] overflow-y-auto pr-2 space-y-1 p-2">
+                      {dbPrimaryActivities
+                        .filter(industry => {
+                          const words = naceSearch.toLowerCase().split(' ').filter(Boolean);
+                          const target = industry.name.toLowerCase();
+                          return words.every(word => target.includes(word));
+                        })
+                        .map((industry) => {
+                          const codePart = industry.name.split(' – ')[0];
+                          const isChecked = editGrant.eligible_nace_codes?.includes(codePart) ?? false;
+                          
+                          return (
+                            <label 
+                              key={industry.id} 
+                              className={cn(
+                                "flex items-center gap-3 px-3 py-2 rounded-md transition-colors cursor-pointer hover:bg-muted/50",
+                                isChecked && "bg-primary/5 border-primary/20"
+                              )}
+                            >
+                              <Checkbox
+                                checked={isChecked}
+                                onCheckedChange={() => toggleNaceCode(codePart)}
+                              />
+                              <span className="text-sm leading-tight">{industry.name}</span>
+                            </label>
+                          );
+                        })}
+                      {dbPrimaryActivities.filter(industry => {
+                        const words = naceSearch.toLowerCase().split(' ').filter(Boolean);
+                        const target = industry.name.toLowerCase();
+                        return words.every(word => target.includes(word));
+                      }).length === 0 && (
+                        <div className="py-8 text-center text-sm text-muted-foreground">
+                          No industries found matching your search.
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -619,7 +682,7 @@ export function ManageGrantsTab() {
                     {(Object.entries(SUB_ACTIVITIES) as [PrimaryActivity, string[]][]).map(([primaryKey, subs]) => (
                       <div key={primaryKey}>
                         <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                          {PRIMARY_ACTIVITIES[primaryKey]}
+                          {PRIMARY_ACTIVITIES[primaryKey as keyof typeof PRIMARY_ACTIVITIES]}
                         </p>
                         <div className="grid gap-1 md:grid-cols-2">
                           {subs.map((sub) => (

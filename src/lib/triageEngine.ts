@@ -376,15 +376,6 @@ function checkMinimumThresholds(
   const schemeCode = grant.scheme_code?.toLowerCase() || '';
   const schemeName = grant.scheme_name.toLowerCase();
   
-  // SME Enhance minimum project cost threshold
-  if (schemeCode.includes('sme-enhance') || schemeName.includes('sme enhance')) {
-    if (userData.totalProjectCost < 10000) {
-      return {
-        eligible: false,
-        note: 'SME Enhance requires a minimum project value of €10,000'
-      };
-    }
-  }
   
   // Invest 2024 thresholds — simplified:
   // SME (Micro, Small, Medium): Total Project Cost must be > €50,000
@@ -425,15 +416,6 @@ function checkMinimumGrantAmount(
   const schemeCode = grant.scheme_code?.toLowerCase() || '';
   const schemeName = grant.scheme_name.toLowerCase();
   
-  // SME Enhance has a hard minimum grant of €10,000
-  if (schemeCode.includes('sme-enhance') || schemeName.includes('sme enhance')) {
-    if (calculatedGrant < 10000) {
-      return {
-        eligible: false,
-        note: 'SME Enhance requires a minimum grant amount of €10,000'
-      };
-    }
-  }
   
   // Check against scheme's specified minimum
   if (minGrant > 0 && calculatedGrant < minGrant) {

@@ -10,11 +10,13 @@ import {
   Settings,
   Users,
   BarChart3,
+  Building2,
 } from "lucide-react";
 import { ManageGrantsTab } from "@/components/admin/ManageGrantsTab";
 import { ViewLeadsTab } from "@/components/admin/ViewLeadsTab";
 import { CoreExpenseMappingTab } from "@/components/admin/CoreExpenseMappingTab";
 import { DashboardAnalytics } from "@/components/admin/DashboardAnalytics";
+import { PrimaryIndustryTab } from "@/components/admin/PrimaryIndustryTab";
 import type { Session } from "@supabase/supabase-js";
 
 export default function AdminDashboard() {
@@ -89,22 +91,26 @@ export default function AdminDashboard() {
       {/* Content */}
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="analytics" className="space-y-6">
-          <TabsList className="grid w-full max-w-2xl grid-cols-4">
-            <TabsTrigger value="analytics" className="gap-2">
+          <TabsList className="flex flex-wrap h-auto w-full max-w-4xl justify-start gap-2 bg-transparent p-0">
+            <TabsTrigger value="analytics" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <BarChart3 className="h-4 w-4" />
               Analytics
             </TabsTrigger>
-            <TabsTrigger value="grants" className="gap-2">
+            <TabsTrigger value="grants" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Settings className="h-4 w-4" />
               Manage Grants
             </TabsTrigger>
-            <TabsTrigger value="leads" className="gap-2">
+            <TabsTrigger value="leads" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Users className="h-4 w-4" />
               View Leads
             </TabsTrigger>
-            <TabsTrigger value="expense-rules" className="gap-2">
+            <TabsTrigger value="expense-rules" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Settings className="h-4 w-4" />
               Expense Rules
+            </TabsTrigger>
+            <TabsTrigger value="industries" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Building2 className="h-4 w-4" />
+              Primary Industry
             </TabsTrigger>
           </TabsList>
 
@@ -122,6 +128,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="expense-rules">
             <CoreExpenseMappingTab />
+          </TabsContent>
+
+          <TabsContent value="industries">
+            <PrimaryIndustryTab />
           </TabsContent>
         </Tabs>
       </main>
